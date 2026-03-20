@@ -79,6 +79,38 @@ python3 train_gpt_mlx.py
 
 Validation always runs on the full `fineweb_val_*` split, which is the fixed first-50k-document set. The smoke command above skips periodic validation and just prints the final `val_loss` and `val_bpb` once at the end.
 
+### 3080 Autoresearch Lab
+
+If you want an autoresearch-style local loop on a single RTX 3080 before spending real challenge compute, this repo now includes a small lab harness:
+
+- `program.md` gives an agent-facing experiment loop
+- `lab/run_experiment.py` launches runs, parses logs, and appends `lab/results.tsv`
+- `lab/README.md` documents the `smoke`, `screen`, `promote`, and `officialish` profiles
+
+Typical local baseline:
+
+```bat
+py -3.12 -m venv .venv
+.venv\Scripts\activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+python -m pip install --upgrade --index-url https://download.pytorch.org/whl/cu128 torch==2.10.0
+python lab/run_experiment.py --init-results
+python lab/run_experiment.py --profile screen --note "baseline 8x448"
+```
+
+If you prefer helpers, `setup_windows_env.cmd` creates the environment and `run_lab.cmd` runs the lab launcher through `.venv`.
+
+Before the first local run, also download the minimal dataset/tokenizer bundle:
+
+```bat
+python data\cached_challenge_fineweb.py --variant sp1024 --train-shards 1
+```
+
+or run `setup_lab_data.cmd`.
+
+On native Windows, prefer plain `python train_gpt.py` for local 1-GPU runs instead of `torchrun`, because the distributed NCCL path is meant for Linux multi-GPU machines.
+
 ### Scaling Up to a Remote Machine
 
 Once you're happy with your local tests, or you want more compute, switch to a remote CUDA machine.
